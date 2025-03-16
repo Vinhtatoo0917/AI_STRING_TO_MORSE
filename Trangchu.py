@@ -7,19 +7,27 @@ import winsound
 
 import PySimpleGUI as sg
 
-def am_thanh(morse_code):
+def am_thanh(morse_code, window):
+    khungdoimau = window['doimau']
     for char in morse_code:
         if char == ".":
+            khungdoimau.update(button_color=('black', 'white')) 
+            window.refresh()
             winsound.Beep(800, 100)
+            khungdoimau.update(button_color=('gray', 'gray')) 
+            window.refresh()
         elif char == "-":
+            khungdoimau.update(button_color=('white', 'black')),
+            window.refresh()
             winsound.Beep(800, 300)
+            khungdoimau.update(button_color=('gray', 'gray'))
+            window.refresh()
         elif char == " ":
             time.sleep(0.1)
         elif char == "/":
-            time.sleep(0.2)
+            time.sleep(0.3)
 
 def form_chuyen_van_ban():
-    #chuyển văn bản sang mã morse
     sg.theme('DarkTeal9')
 
     layout = [
@@ -30,7 +38,10 @@ def form_chuyen_van_ban():
         [sg.Text('🎵 Mã Morse:', font=('Arial', 12), size=(12, 1)), 
         sg.Multiline(size=(35, 6), key='morse', font=('Arial', 12), text_color='yellow', background_color='#222222', border_width=2)],
         [sg.Button('🗑️ Clear', font=('Arial', 12, 'bold'), button_color=('white', 'red'), size=(10,1)), 
-        [sg.Button('🔊 Phát âm thanh', font=('Arial', 12, 'bold'), button_color=('white', 'green'), size=(20,1))], 
+        [
+            sg.Button('🔊 Phát âm thanh', key='play_button', font=('Arial', 12, 'bold'), button_color=('white', '#007ACC')),
+            sg.Button(key='doimau', font=('Arial', 12, 'bold'), button_color=('black', 'white'), size=(3,1)),
+        ],
         sg.Exit('🚪 Thoát', font=('Arial', 12, 'bold'), button_color=('white', '#444444'), size=(10,1))]
     ]
     window = sg.Window('TVinh - Morse Converter', layout, element_justification='c', finalize=True)
@@ -44,29 +55,40 @@ def form_chuyen_van_ban():
             van_ban_khong_dau = unidecode(van_ban_nhap)
             xuatmamorse = chuyen_doi_van_ban_sang_ma_morse(van_ban_khong_dau)
             window['morse'].update(xuatmamorse)
-        elif event == '🔊 Phát âm thanh':
+        elif event == 'play_button':
+            khungdoimau = window['doimau']
             mamorse = value['morse'].strip()
-            am_thanh(mamorse)
+            am_thanh(mamorse, window)
+        elif event == '🗑️ Clear':
+            window['vanban'].update("")
+            window['morse'].update("")
 
-        
-        
 
 def form_chuyen_morse():
-    #chuyển mã morse sang văn bản
-    sg.theme('DarkTeal9')
+    sg.theme('DarkGrey5')
+
     layout = [
-        [sg.Text('Nhập mã Morse:', font=('Arial', 12))],
-        [sg.InputText(key='-INPUT-', font=('Arial', 12))],
-        [sg.Button('Chuyển đổi', font=('Arial', 12, 'bold'), button_color=('white', 'blue')),
-         sg.Button('Thoát', font=('Arial', 12, 'bold'), button_color=('white', 'red'))]
+        [sg.Text('🔹 Chuyển mã morse sang văn bản 🔹', font=('Arial', 18, 'bold'), text_color='#00CCFF', background_color='#1E1E1E', justification='center', expand_x=True)],
+        [sg.Text('📥 Nhập mã Morse:', font=('Arial', 12, 'bold'), text_color='#DDDDDD', background_color='#1E1E1E')],
+        [sg.InputText(key='-INPUT-', font=('Arial', 14), size=(50,1), background_color='#2E2E2E', text_color='white', border_width=2, justification='center')],
+        [sg.Button('🔄 Chuyển đổi', font=('Arial', 12, 'bold'), button_color=('white', '#0078D7'), size=(15, 1), border_width=1, pad=(5, 15))],
+        [sg.Text('📜 Kết quả:', font=('Arial', 12, 'bold'), text_color='#DDDDDD', background_color='#1E1E1E')],
+        [sg.Multiline(size=(50, 5), key='-OUTPUT-', font=('Arial', 14), text_color='#00FF00', background_color='#1E1E1E', border_width=2, disabled=True, autoscroll=True)],
+        [sg.Button('❌ Thoát', font=('Arial', 12, 'bold'), button_color=('white', '#D70000'), size=(15, 1), border_width=1, pad=(5, 15))]
     ]
-    window = sg.Window('Chuyển mã Morse sang văn bản', layout, element_justification='c', finalize=True)
+    
+    window = sg.Window('Morse Code Translator', layout, element_justification='c', finalize=True, background_color='#1E1E1E')
+
     while True:
         event, value = window.read()
-        if event in (sg.WINDOW_CLOSED, '🚪 Thoát'):
-            window.close(),
-            return trangchu()
-
+        if event in (sg.WINDOW_CLOSED, '❌ Thoát'):
+            window.close()
+            break
+        elif event == '🔄 Chuyển đổi':
+            Kytumorse = value['-INPUT-']
+            vanbansaukhichuyendoi = chuyen_doi_morse_sang_van_ban(Kytumorse)
+            window['-OUTPUT-'].update(vanbansaukhichuyendoi)
+            
 
 def trangchu():
     #trang chủ
@@ -117,7 +139,7 @@ class caynode:
         nut.chi_phi = chi_phi
 
     def tim_ma_morse_ucs(node, ky_tu):
-        if ky_tu == " ":
+        if ky_tu == " ": # Nếu ký tự là khoảng trắng sẽ trả về là /
             return "/"
         hang_doi_uu_tien = PriorityQueue()
         hang_doi_uu_tien.put((0, "", node.goc))  # (Chi phí, đường đi, nút hiện tại)
@@ -131,6 +153,15 @@ class caynode:
             for ky_hieu, nut_con in nut_hien_tai.con.items():
                 hang_doi_uu_tien.put((chi_phi + nut_con.chi_phi, duong_di + ky_hieu, nut_con))
         return None
+    
+    def tim_ky_tu_tu_morse(node, ma_morse): #Hàm chuyển mã morse sang văn bản ( cụ thể sẽ sử dụng thuật toán dfs )
+        nut = node.goc
+        for ky_hieu in ma_morse: 
+            if ky_hieu in nut.con:
+                nut = nut.con[ky_hieu]
+            else:
+                return "?"
+        return nut.ma_morse if nut.ma_morse else "?"
 
 
 
@@ -153,5 +184,14 @@ def chuyen_doi_van_ban_sang_ma_morse(van_ban):
             ma_morse = cay.tim_ma_morse_ucs(ky_tu)
             ket_qua_morse.append(ma_morse if ma_morse else "?")
     return " ".join(ket_qua_morse)
+
+def chuyen_doi_morse_sang_van_ban(ma_morse):
+    ket_qua = []
+    tu_morse = ma_morse.split(" / ")
+    for tu in tu_morse:
+        ky_tu_morse = tu.split(" ")
+        tu_giai_ma = "".join(cay.tim_ky_tu_tu_morse(ky_tu) for ky_tu in ky_tu_morse)
+        ket_qua.append(tu_giai_ma)
+    return " ".join(ket_qua)
 
 trangchu()
