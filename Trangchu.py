@@ -7,6 +7,17 @@ import winsound
 
 import PySimpleGUI as sg
 
+MORSE_CODE = {
+    'A': ".-", 'B': "-...", 'C': "-.-.", 'D': "-..", 'E': ".",
+    'F': "..-.", 'G': "--.", 'H': "....", 'I': "..", 'J': ".---",
+    'K': "-.-", 'L': ".-..", 'M': "--", 'N': "-.", 'O': "---",
+    'P': ".--.", 'Q': "--.-", 'R': ".-.", 'S': "...", 'T': "-",
+    'U': "..-", 'V': "...-", 'W': ".--", 'X': "-..-", 'Y': "-.--", 'Z': "--..",
+    '1': ".----", '2': "..---", '3': "...--", '4': "....-", '5': ".....",
+    '6': "-....", '7': "--...", '8': "---..", '9': "----.", '0': "-----",
+    ' ': "|"
+}
+
 def am_thanh(morse_code, window):
     khungdoimau = window['doimau']
     for char in morse_code:
@@ -114,8 +125,6 @@ def trangchu():
             break
     window.close()
 
-conx = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server}; SERVER=DESKTOP-9BNK57A; Database=MAMORSE; UID=Trituenhantao; PWD=12345678;')
-cursor = conx.cursor()
 
 class nodecon:
     def __init__(node):
@@ -166,9 +175,7 @@ class caynode:
 
 
 cay = caynode()
-for row in cursor.execute("select * from BangMorse"):
-    kytu = row.KyTu
-    ma_morse = row.MaMorse
+for kytu, ma_morse in MORSE_CODE.items():
     cay.themnode(kytu, ma_morse)
 
 def duyet_trie(nut, duong_di=""):
